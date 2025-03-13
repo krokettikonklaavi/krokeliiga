@@ -13,8 +13,7 @@ SUPER_ADMIN = getenv("SUPER_ADMIN")
 
 # -----------------------------------KROKE--------------------------------------
 async def kroke(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user.id
-    if not user == SUPER_ADMIN:
+    if not update.effective_user.id == SUPER_ADMIN:
         await update.message.reply_text(
             "Sinulla ei ole oikeuksia lisätä uusia osakilpailuita."
         )
