@@ -83,6 +83,8 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "(esim. /nimi Timppa, Tomppa)\n\n"
         "".format(no),
     )
+    if not apu.permit_super(update.effective_user.id):
+        return
     await update.message.reply_text(
         "/kroke komennolla voi lisätä uuden osakilpailun.\n"
         "(esim. /kroke 6.9)\n\n"

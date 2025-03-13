@@ -6,10 +6,17 @@ db_path = path.join(pa, "kroke.db")
 log_path = path.join(pa, "krokebot.log")
 
 ADMINS = getenv("ADMINS").split(",")
+SUPER_ADMIN = getenv("SUPER_ADMIN")
 
 
 def permit(id: int):
     if str(id) in ADMINS:
+        return True
+    return False
+
+
+def permit_super(id: int):
+    if str(id) == SUPER_ADMIN:
         return True
     return False
 
