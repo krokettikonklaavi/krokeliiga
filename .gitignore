@@ -5,7 +5,7 @@
 *.txt
 
 # ignore database and text files
-files/
+data/*
 
 # except requirements.txt
 !requirements.txt
@@ -18,3 +18,5 @@ __pycache__
 
 # ignore folders by pycharm
 .idea
+
+.env

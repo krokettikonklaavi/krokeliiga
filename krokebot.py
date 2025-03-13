@@ -1,58 +1,46 @@
-from telegram.ext import (Updater, CommandHandler)
+from telegram.ext import Application, CommandHandler
 import apu
-from callback import (start, help, tulokset, pelaajat, joukkueet, osakilpailut)
-from callback_admin import (uusi, maksu, pisteet, poista, nimi, piste)
-from callback_super_admin import (kroke, error, delete)
+from callback import start, help, tulokset, pelaajat, joukkueet, osakilpailut
+from callback_admin import uusi, maksu, pisteet, poista, nimi, piste
+from callback_super_admin import kroke, error, delete
 from os import getenv
-import time
+from logg import Logger
 
-token = getenv("KROKE_BOT")
+TOKEN = getenv("TOKEN")
+
+logger = Logger(apu.log_path).logger
+
+
+async def post_init(app: Application):
+    apu.tables()
+
+    # Add command handlers
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help))
+    app.add_handler(CommandHandler("uusi", uusi))
+    app.add_handler(CommandHandler("maksu", maksu))
+    app.add_handler(CommandHandler("kroke", kroke))
+    app.add_handler(CommandHandler("pisteet", pisteet))
+    app.add_handler(CommandHandler("tulokset", tulokset))
+    app.add_handler(CommandHandler("pelaajat", pelaajat))
+    app.add_handler(CommandHandler("poista", poista))
+    app.add_handler(CommandHandler("joukkueet", joukkueet))
+    app.add_handler(CommandHandler("nimi", nimi))
+    app.add_handler(CommandHandler("piste", piste))
+    app.add_handler(CommandHandler("osakilpailut", osakilpailut))
+    app.add_handler(CommandHandler("delete", delete))
+
+    # Set error handler
+    app.add_error_handler(error)
+
+    logger.info("Post init done.")
 
 
 def main():
-    print("Waiting for internet connection")
-    while not apu.check_internet():
-        time.sleep(5)
-
-    apu.tables()
-
-    updater = Updater(token, use_context=True)
-    dispatcher = updater.dispatcher
-    bot = dispatcher.bot
-    # handlers
-    start_handler = CommandHandler('start', start)
-    help_handler = CommandHandler("help", help)
-    uusi_handler = CommandHandler('uusi', uusi)
-    maksu_handler = CommandHandler('maksu', maksu)
-    kroke_handler = CommandHandler('kroke', kroke)
-    sij_handler = CommandHandler("pisteet", pisteet)
-    tul_handler = CommandHandler("tulokset", tulokset)
-    pel_handler = CommandHandler("pelaajat", pelaajat)
-    poista_handler = CommandHandler("poista", poista)
-    joukk_handler = CommandHandler("joukkueet", joukkueet)
-    nimi_handler = CommandHandler("nimi", nimi)
-    piste_handler = CommandHandler("piste", piste)
-    osa_handler = CommandHandler("osakilpailut", osakilpailut)
-    del_handler = CommandHandler("delete", delete)
-    # handlers to dispatchers
-    dispatcher.add_handler(start_handler)
-    dispatcher.add_handler(help_handler)
-    dispatcher.add_handler(uusi_handler)
-    dispatcher.add_handler(maksu_handler)
-    dispatcher.add_handler(sij_handler)
-    dispatcher.add_handler(kroke_handler)
-    dispatcher.add_handler(tul_handler)
-    dispatcher.add_handler(pel_handler)
-    dispatcher.add_handler(poista_handler)
-    dispatcher.add_handler(joukk_handler)
-    dispatcher.add_handler(nimi_handler)
-    dispatcher.add_handler(piste_handler)
-    dispatcher.add_handler(osa_handler)
-    dispatcher.add_handler(del_handler)
-    dispatcher.add_error_handler(error)
-    updater.start_polling()
-    updater.idle()
+    app = Application.builder().token(TOKEN).concurrent_updates(False).build()
+    app.post_init = post_init
+    app.run_polling()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

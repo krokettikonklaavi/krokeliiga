@@ -1,69 +1,57 @@
 import sqlite3
-from os import path
-import urllib.request
+from os import getenv, path
 
-pa = path.dirname(path.abspath(__file__))
-perm_path = path.join(pa, "files", "luvat.txt")
-db_path = path.join(pa, "files", "tilastot.db")
-log_path = path.join(pa, "files", "krokebot.log")
+pa = path.join(path.dirname(path.abspath(__file__)), "data")
+db_path = path.join(pa, "kroke.db")
+log_path = path.join(pa, "krokebot.log")
 
-
-def check_internet():
-    url = "http://www.google.com/"
-    try:
-        urllib.request.urlopen(url)
-        print("Connection succesful")
-        return True
-    except (urllib.error.URLError):
-        print("No internet connection")
-        return False
+ADMINS = getenv("ADMINS").split(",")
 
 
 def permit(id: int):
-    with open(perm_path, 'r') as permissions:
-        if str(id) in permissions.read():
-            return True
-        else:
-            return False
+    if str(id) in ADMINS:
+        return True
+    return False
 
 
 def tables():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS Maksut (
         nimi CHAR(64),
         maksu INT DEFAULT 0,
         PRIMARY KEY (nimi)
-    )""")
-    cursor.execute("""
+    )"""
+    )
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS Tapahtumat (
         ukko CHAR(64),
         pvm CHAR(4),
         pisteet INT,
         PRIMARY KEY (ukko, pvm)
-    )""")
-    cursor.execute("""
+    )"""
+    )
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS Kroket (
         pvm CHAR(4),
         nimi CHAR(64),
         PRIMARY KEY (pvm)
-    )""")
+    )"""
+    )
     conn.commit()
     conn.close()
 
 
 def names(args: list):
-    joined = ' '.join(args)
+    joined = " ".join(args)
     names = joined.split(",")
     for i in range(len(names)):
         names[i] = names[i].strip()
     return names
-
-
-def botM(update, context, message: str):
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text=message)
 
 
 def piste(update, context, name: str, pisteet: int, pvm: str):

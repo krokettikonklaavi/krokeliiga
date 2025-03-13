@@ -1,10 +1,16 @@
 version: '3'
 services:
   krokeliigabot:
-    build: .
-    image: krokeliiga
-    container_name: krokeliiga    
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
     volumes:
-      - ${DATABASE}:/bot/files:rw
-    environment:
-      - KROKE_BOT=${KROKE_BOT}
+      - ./data:/bot/data:rw
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: always

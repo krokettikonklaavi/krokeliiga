@@ -1,16 +1,23 @@
+from os import getenv
 import sqlite3
+
+from telegram import Update
+from telegram.ext import ContextTypes
 import apu
 from logg import Logger
 
 logger = Logger(apu.log_path).logger
 
+SUPER_ADMIN = getenv("SUPER_ADMIN")
+
 
 # -----------------------------------KROKE--------------------------------------
-def kroke(update, context):
+async def kroke(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user.id
-    if not user == 21607043:
-        apu.botM(update, context,
-                 "Sinulla ei ole oikeuksia lisätä uusia osakilpailuita.")
+    if not user == SUPER_ADMIN:
+        await update.message.reply_text(
+            "Sinulla ei ole oikeuksia lisätä uusia osakilpailuita."
+        )
         return
     names = apu.names(context.args)
     sel = """
@@ -22,27 +29,31 @@ def kroke(update, context):
         INSERT INTO Kroket
         VALUES(?, ?)
     """
-    if names[0] == '':
-        apu.botM(update, context,
-                 "Anna parametriksi osakilpailun päivämäärä ja osakilpailun "
-                 "nimi pilkulla erotettuna.")
+    if names[0] == "":
+        await update.message.reply_text(
+            "Anna parametriksi osakilpailun päivämäärä ja osakilpailun "
+            "nimi pilkulla erotettuna.",
+        )
         return
-    if '' in names:
-        apu.botM(update, context,
-                 "Anna toisena parametrinä osakilpailun nimi pilkulla "
-                 "erotettuna päivämäärästä.")
+    if "" in names:
+        await update.message.reply_text(
+            "Anna toisena parametrinä osakilpailun nimi pilkulla "
+            "erotettuna päivämäärästä.",
+        )
         return
     if len(names) == 2:
         pvm = names[0].split(".")
         if not len(pvm) == 2:
-            apu.botM(update, context,
-                     "Anna parametriksi päivämäärä, jolle haluat "
-                     "lisätä osakilpailun, muodossa dd.mm")
+            await update.message.reply_text(
+                "Anna parametriksi päivämäärä, jolle haluat "
+                "lisätä osakilpailun, muodossa dd.mm",
+            )
             return
         if not pvm[0].isdigit() or not pvm[1].isdigit():
-            apu.botM(update, context,
-                     "Anna parametriksi päivämäärä dd.mm, jolle haluat lisätä "
-                     "osakilpailun.")
+            await update.message.reply_text(
+                "Anna parametriksi päivämäärä dd.mm, jolle haluat lisätä "
+                "osakilpailun.",
+            )
             return
         pv = pvm[0]
         kuu = pvm[1]
@@ -50,47 +61,47 @@ def kroke(update, context):
         pvm = apu.fdate(kuu, pv)
         conn = sqlite3.connect(apu.db_path)
         cursor = conn.cursor()
-        cursor.execute(sel, (pvm, ))
+        cursor.execute(sel, (pvm,))
         rows = cursor.fetchall()
         if len(rows) == 0:
             cursor.execute(ins, (pvm, name))
-            apu.botM(update, context,
-                     "Osakilpailu lisätty tietokantaan.")
+            await update.message.reply_text("Osakilpailu lisätty tietokantaan.")
             conn.commit()
             logger.info(update.effective_user.full_name + " added a new playday.")
         else:
-            apu.botM(update, context,
-                     "Osakilpailu on jo tietokannassa.")
+            await update.message.reply_text("Osakilpailu on jo tietokannassa.")
         conn.close()
     else:
-        apu.botM(update, context,
-                 "Anna parametriksi osakilpailun päivämäärä ja osakilpailun "
-                 "nimi pilkulla erotettuna.")
+        await update.message.reply_text(
+            "Anna parametriksi osakilpailun päivämäärä ja osakilpailun "
+            "nimi pilkulla erotettuna.",
+        )
 
 
 # -----------------------------------DELETE-------------------------------------
-def delete(update, context):
-    user = update.effective_user.id
-    if not user == 21607043:
-        apu.botM(update, context,
-                 "Sinulla ei ole oikeuksia poistaa osakilpailuita.")
+async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.effective_user.id == SUPER_ADMIN:
+        await update.message.reply_text(
+            "Sinulla ei ole oikeuksia poistaa osakilpailuita."
+        )
         return
     names = apu.names(context.args)
-    if names[0] == '':
-        apu.botM(update, context,
-                 "Anna parametriksi osakilpailun päivämäärä.")
+    if names[0] == "":
+        await update.message.reply_text("Anna parametriksi osakilpailun päivämäärä.")
         return
     if len(names) == 1:
         pvm = names[0].split(".")
         if not len(pvm) == 2:
-            apu.botM(update, context,
-                     "Anna parametriksi päivämäärä dd.mm, jolta haluat poistaa "
-                     "osakilpailun,")
+            await update.message.reply_text(
+                "Anna parametriksi päivämäärä dd.mm, jolta haluat poistaa "
+                "osakilpailun,",
+            )
             return
         if not pvm[0].isdigit() or not pvm[1].isdigit():
-            apu.botM(update, context,
-                     "Anna parametriksi päivämäärä dd.mm, jolta haluat poistaa "
-                     "osakilpailun,")
+            await update.message.reply_text(
+                "Anna parametriksi päivämäärä dd.mm, jolta haluat poistaa "
+                "osakilpailun,",
+            )
             return
         conn = sqlite3.connect(apu.db_path)
         cursor = conn.cursor()
@@ -110,23 +121,22 @@ def delete(update, context):
         cursor.execute(sel1, (pvm,))
         rows = cursor.fetchall()
         if len(rows) == 0:
-            apu.botM(update, context,
-                     "Osakilpailu ei ole tietokannassa.")
+            await update.message.reply_text("Osakilpailu ei ole tietokannassa.")
             conn.close()
             return
         cursor.execute(del1, (pvm,))
         conn.commit()
         conn.close()
         logger.info(update.effective_user.full_name + " deleted a competition.")
-        apu.botM(update, context,
-                 "Osakilpailu poistettu tietokannasta.")
+        await update.message.reply_text("Osakilpailu poistettu tietokannasta.")
     else:
-        apu.botM(update, context,
-                 "Anna parametriksi päivämäärä, jolta haluat "
-                 "poistaa osakilpailun, muodossa dd.mm")
+        await update.message.reply_text(
+            "Anna parametriksi päivämäärä, jolta haluat "
+            "poistaa osakilpailun, muodossa dd.mm",
+        )
 
 
 # -----------------------------------ERROR--------------------------------------
-def error(update, context):
+def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
