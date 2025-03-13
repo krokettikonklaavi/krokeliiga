@@ -1,4 +1,3 @@
-from os import getenv
 import sqlite3
 
 from telegram import Update
@@ -8,12 +7,10 @@ from logg import Logger
 
 logger = Logger(apu.log_path).logger
 
-SUPER_ADMIN = getenv("SUPER_ADMIN")
-
 
 # -----------------------------------KROKE--------------------------------------
 async def kroke(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.effective_user.id == SUPER_ADMIN:
+    if not apu.permit_super(update.effective_user.id):
         await update.message.reply_text(
             "Sinulla ei ole oikeuksia lisätä uusia osakilpailuita."
         )
@@ -79,7 +76,7 @@ async def kroke(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # -----------------------------------DELETE-------------------------------------
 async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.effective_user.id == SUPER_ADMIN:
+    if not apu.permit_super(update.effective_user.id):
         await update.message.reply_text(
             "Sinulla ei ole oikeuksia poistaa osakilpailuita."
         )
